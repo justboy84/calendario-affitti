@@ -1,44 +1,58 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Verifica Prenotazioni</title>
-  <style>
-    body { font-family: Arial, sans-serif; padding: 20px; background-color: #f0f0f0; }
-    h1 { text-align: center; }
-    .prenotazioni { max-width: 600px; margin: 20px auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-    .entry { margin-bottom: 12px; font-size: 1.1em; }
-  </style>
-</head>
-<body>
-  <h1>Verifica Prenotazioni dal Foglio</h1>
-  <div class="prenotazioni" id="prenotazioni">
-    Caricamento in corso...
-  </div>
+// Google Apps Script: Estrazione prenotazioni da foglio con parsing formato 'dom 20 apr 25'
+function doGet() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const sheet = ss.getSheetByName("Prenotazioni ALBA");
+  const data = sheet.getDataRange().getValues();
 
-  <script>
-    async function loadPrenotazioni() {
-      const res = await fetch("https://script.google.com/macros/s/AKfycbxfJ3pJHkSm0SHenFspLTkVrUOO_Ts0XJ4ZLcSE4EYg8qXKG8oQpa94Gi0sR28-WV74GQ/exec?function=doGetData");
-      const data = await res.json();
+  const today = new Date();
+  const prenotazioni = [];
 
-      const container = document.getElementById("prenotazioni");
-      container.innerHTML = "";
+  // Mappa mesi italiani
+  const mesi = {
+    "gen": 0, "feb": 1, "mar": 2, "apr": 3, "mag": 4, "giu": 5,
+    "lug": 6, "ago": 7, "set": 8, "ott": 9, "nov": 10, "dic": 11
+  };
 
-      if (!data.prenotazioni || data.prenotazioni.length === 0) {
-        container.textContent = "Nessuna prenotazione trovata.";
-        return;
+  for (let i = 1; i < data.length; i++) {
+    const cliente = data[i][0];
+    const inizioRaw = data[i][1];
+    const fineRaw = data[i][2];
+
+    if (!inizioRaw || !fineRaw) continue;
+
+    try {
+      // Parsing tipo 'dom 20 apr 25'
+      const [,, giornoInizio, meseInizio, annoInizio] = inizioRaw.split(" ");
+      const [,, giornoFine, meseFine, annoFine] = fineRaw.split(" ");
+
+      const inizio = new Date(parseInt("20" + annoInizio), mesi[meseInizio], parseInt(giornoInizio));
+      const fine = new Date(parseInt("20" + annoFine), mesi[meseFine], parseInt(giornoFine));
+
+      if (!isNaN(inizio) && !isNaN(fine)) {
+        prenotazioni.push(`PRENOTAZIONE: ${cliente} dal ${inizio.toLocaleDateString()} al ${fine.toLocaleDateString()}`);
       }
-
-      data.prenotazioni.forEach(p => {
-        const div = document.createElement("div");
-        div.className = "entry";
-        div.textContent = `PRENOTAZIONE: dal ${p.start} al ${p.end}`;
-        container.appendChild(div);
-      });
+    } catch (e) {
+      Logger.log("Errore parsing riga " + (i+1) + ": " + e);
     }
+  }
 
-    loadPrenotazioni();
-  </script>
-</body>
-</html>
+  const output = prenotazioni.length > 0
+    ? `<ul>` + prenotazioni.map(p => `<li>${p}</li>`).join("") + `</ul>`
+    : "<p>Nessuna prenotazione trovata.</p>";
+
+  const html = `
+    <html><head>
+      <style>
+        body { font-family: Arial; background: #f1f1f1; text-align: center; padding: 50px; }
+        .box { background: #fff; padding: 20px; border-radius: 8px; display: inline-block; }
+        ul { text-align: left; }
+      </style>
+    </head><body>
+      <div class="box">
+        <h2>Verifica Prenotazioni dal Foglio</h2>
+        ${output}
+      </div>
+    </body></html>`;
+
+  return ContentService.createTextOutput(html).setMimeType(ContentService.MimeType.HTML);
+}
