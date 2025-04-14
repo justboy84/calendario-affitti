@@ -3,122 +3,42 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Calendario Affitti 2025</title>
+  <title>Verifica Prenotazioni</title>
   <style>
-    body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
-    h1, h2 { text-align: center; }
-    .month-block { margin: 30px auto; max-width: 800px; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td {
-      border: 1px solid #ccc;
-      width: 14.28%;
-      height: 90px;
-      vertical-align: top;
-      padding: 6px;
-      position: relative;
-    }
-    td.occupied { background-color: #ffd6d6; }
-    td.free { background-color: #eaffea; }
-    .day-number { font-weight: bold; }
-    .price { font-size: 0.75em; color: #007b00; position: absolute; bottom: 4px; right: 6px; }
+    body { font-family: Arial, sans-serif; padding: 20px; background-color: #f0f0f0; }
+    h1 { text-align: center; }
+    .prenotazioni { max-width: 600px; margin: 20px auto; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+    .entry { margin-bottom: 12px; font-size: 1.1em; }
   </style>
 </head>
 <body>
-  <h1>Calendario Affitti 2025</h1>
-  <div id="calendar">Caricamento calendario...</div>
+  <h1>Verifica Prenotazioni dal Foglio</h1>
+  <div class="prenotazioni" id="prenotazioni">
+    Caricamento in corso...
+  </div>
 
   <script>
-    async function loadCalendar() {
-      const response = await fetch("https://script.google.com/macros/s/AKfycbxfJ3pJHkSm0SHenFspLTkVrUOO_Ts0XJ4ZLcSE4EYg8qXKG8oQpa94Gi0sR28-WV74GQ/exec?function=doGetData");
-      const data = await response.json();
+    async function loadPrenotazioni() {
+      const res = await fetch("https://script.google.com/macros/s/AKfycbxfJ3pJHkSm0SHenFspLTkVrUOO_Ts0XJ4ZLcSE4EYg8qXKG8oQpa94Gi0sR28-WV74GQ/exec?function=doGetData");
+      const data = await res.json();
 
-      const calendar = document.getElementById("calendar");
-      calendar.innerHTML = "";
+      const container = document.getElementById("prenotazioni");
+      container.innerHTML = "";
 
-      const prenotazioni = data.prenotazioni.map(p => {
-  return {
-    start: new Date(p.start + 'T00:00:00'),
-    end: new Date(p.end + 'T00:00:00')
-  };
-});
-
-      const months = [
-        "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
-        "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"
-      ];
-
-      for (let m = 0; m < 12; m++) {
-        const monthDiv = document.createElement("div");
-        monthDiv.className = "month-block";
-
-        const header = document.createElement("h2");
-        header.textContent = `${months[m]} 2025`;
-        monthDiv.appendChild(header);
-
-        const table = document.createElement("table");
-        const weekHeader = document.createElement("tr");
-        ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"].forEach(day => {
-          const th = document.createElement("th");
-          th.textContent = day;
-          weekHeader.appendChild(th);
-        });
-        table.appendChild(weekHeader);
-
-        let date = new Date(2025, m, 1);
-        const firstDay = (date.getDay() + 6) % 7;
-        let row = document.createElement("tr");
-
-        for (let i = 0; i < firstDay; i++) {
-          row.appendChild(document.createElement("td"));
-        }
-
-        while (date.getMonth() === m) {
-          const cell = document.createElement("td");
-          const iso = date.toISOString().split('T')[0];
-          const giorno = date.getDate();
-          const giornoSettimana = date.getDay();
-          const mese = date.toLocaleDateString("it-IT", { month: 'long' }).toLowerCase();
-
-          const dateOnly = date.toISOString().split('T')[0];
-const occupied = prenotazioni.some(p => {
-  const s = p.start.toISOString().split('T')[0];
-  const e = p.end.toISOString().split('T')[0];
-  return dateOnly >= s && dateOnly < e;
-});
-          cell.className = occupied ? "occupied" : "free";
-          cell.innerHTML = `<div class='day-number'>${giorno}</div>`;
-
-          if (!occupied) {
-            let prezzo = parseFloat(data.prezzi[mese]?.notte || 0);
-            if (giornoSettimana === 5 || giornoSettimana === 6) {
-              prezzo += parseFloat(data.prezzi[mese]?.weekend || 0);
-            }
-            cell.innerHTML += `<div class='price'>€ ${prezzo.toFixed(0)}</div>`;
-          }
-
-          row.appendChild(cell);
-
-          if ((firstDay + giorno) % 7 === 0) {
-            table.appendChild(row);
-            row = document.createElement("tr");
-          }
-
-          date.setDate(date.getDate() + 1);
-        }
-
-        if (row.children.length > 0) {
-          while (row.children.length < 7) {
-            row.appendChild(document.createElement("td"));
-          }
-          table.appendChild(row);
-        }
-
-        monthDiv.appendChild(table);
-        calendar.appendChild(monthDiv);
+      if (!data.prenotazioni || data.prenotazioni.length === 0) {
+        container.textContent = "Nessuna prenotazione trovata.";
+        return;
       }
+
+      data.prenotazioni.forEach(p => {
+        const div = document.createElement("div");
+        div.className = "entry";
+        div.textContent = `PRENOTAZIONE: dal ${p.start} al ${p.end}`;
+        container.appendChild(div);
+      });
     }
 
-    loadCalendar();
+    loadPrenotazioni();
   </script>
 </body>
 </html>
