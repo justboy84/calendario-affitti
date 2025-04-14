@@ -78,10 +78,10 @@
           const mese = date.toLocaleDateString("it-IT", { month: 'long' }).toLowerCase();
 
           const dateOnly = date.toISOString().split('T')[0];
-          const occupied = prenotazioni.some(p => {
-          const s = p.start.toISOString().split('T')[0];
-          const e = p.end.toISOString().split('T')[0];
-          return dateOnly >= s && dateOnly < e;
+const occupied = prenotazioni.some(p => {
+  const s = p.start.toISOString().split('T')[0];
+  const e = p.end.toISOString().split('T')[0];
+  return dateOnly >= s && dateOnly < e;
 });
           cell.className = occupied ? "occupied" : "free";
           cell.innerHTML = `<div class='day-number'>${giorno}</div>`;
