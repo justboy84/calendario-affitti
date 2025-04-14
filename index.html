@@ -77,7 +77,12 @@
           const giornoSettimana = date.getDay();
           const mese = date.toLocaleDateString("it-IT", { month: 'long' }).toLowerCase();
 
-          const occupied = prenotazioni.some(p => date >= p.start && date < p.end);
+          const dateOnly = date.toISOString().split('T')[0];
+          const occupied = prenotazioni.some(p => {
+          const s = p.start.toISOString().split('T')[0];
+          const e = p.end.toISOString().split('T')[0];
+          return dateOnly >= s && dateOnly < e;
+});
           cell.className = occupied ? "occupied" : "free";
           cell.innerHTML = `<div class='day-number'>${giorno}</div>`;
 
