@@ -2,75 +2,143 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
-  <title>Verifica Prenotazioni dal Foglio</title>
+  <title>Calendario Affitti</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
-      background-color: #f1f1f1;
-      padding: 40px;
+      font-family: 'Arial', sans-serif;
+      background-color: #f0f0f0;
+      padding: 20px;
       text-align: center;
     }
-
     h1 {
-      color: #111;
+      margin-bottom: 20px;
     }
-
-    #prenotazioni {
-      max-width: 600px;
-      margin: 20px auto;
-      padding: 20px;
-      background-color: #fff;
-      border-radius: 6px;
-      box-shadow: 0 0 10px rgba(0,0,0,0.1);
-      text-align: left;
+    .calendar {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 5px;
+      max-width: 900px;
+      margin: auto;
     }
-
-    .entry {
-      padding: 6px 0;
-      border-bottom: 1px solid #ddd;
+    .day {
+      background-color: #d4edda;
+      border: 1px solid #ccc;
+      padding: 5px;
+      height: 80px;
+      position: relative;
     }
-
-    .entry:last-child {
-      border-bottom: none;
+    .occupied {
+      background-color: #f8d7da;
     }
-
-    .empty {
-      font-style: italic;
-      color: #888;
+    .day span {
+      font-weight: bold;
+    }
+    .price {
+      position: absolute;
+      bottom: 5px;
+      right: 5px;
+      font-size: 10px;
+      color: #555;
+    }
+    .month-title {
+      grid-column: span 7;
+      font-weight: bold;
+      font-size: 1.2em;
+      margin: 10px 0;
+      background: #fff3cd;
+      padding: 10px;
     }
   </style>
 </head>
 <body>
-  <h1>Verifica Prenotazioni dal Foglio</h1>
-  <div id="prenotazioni">
-    <div class="empty">Caricamento in corso...</div>
-  </div>
+
+  <h1>Calendario Prenotazioni Affitti 2025</h1>
+  <div id="calendar" class="calendar"></div>
 
   <script>
-    const scriptURL = "https://script.google.com/macros/s/AKfycbxfJ3pJHkSm0SHenFspLTkVrUOO_Ts0XJ4ZLcSE4EYg8qXKG8oQpa94Gi0sR28-WV74GQ/exec";
+    const scriptUrl = "https://script.google.com/macros/s/AKfycbxfJ3pJHkSm0SHenFspLTkVrUOO_Ts0XJ4ZLcSE4EYg8qXKG8oQpa94Gi0sR28-WV74GQ/exec";
 
-    fetch(scriptURL)
-      .then(res => res.json())
-      .then(data => {
-        const container = document.getElementById("prenotazioni");
-        container.innerHTML = "";
+    const months = [
+      "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
+      "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"
+    ];
 
-        if (!data || data.length === 0) {
-          container.innerHTML = '<div class="empty">Nessuna prenotazione trovata.</div>';
-          return;
+    async function fetchData() {
+      const res = await fetch(scriptUrl);
+      const data = await res.json();
+      return data;
+    }
+
+    function formatDate(date) {
+      return date.toISOString().split("T")[0];
+    }
+
+    function isOccupied(dateStr, prenotazioni) {
+      const date = new Date(dateStr);
+      for (const pren of prenotazioni) {
+        const start = new Date(pren.start);
+        const end = new Date(pren.end);
+        if (date >= start && date < end) return true;
+      }
+      return false;
+    }
+
+    function buildCalendar(prenotazioni, prezzi) {
+      const container = document.getElementById("calendar");
+      let year = 2025;
+
+      for (let m = 0; m < 12; m++) {
+        const monthName = months[m];
+        const daysInMonth = new Date(year, m + 1, 0).getDate();
+        const firstDay = new Date(year, m, 1).getDay(); // 0=Sun, 1=Mon...
+
+        // Titolo del mese
+        const title = document.createElement("div");
+        title.className = "month-title";
+        title.textContent = monthName.toUpperCase();
+        container.appendChild(title);
+
+        // Spazi vuoti iniziali
+        for (let d = 0; d < (firstDay === 0 ? 6 : firstDay - 1); d++) {
+          const empty = document.createElement("div");
+          empty.className = "day";
+          container.appendChild(empty);
         }
 
-        data.forEach(row => {
-          const div = document.createElement("div");
-          div.className = "entry";
-          div.textContent = `Prenotazione: dal ${row.start} al ${row.end} per ${row.name}`;
-          container.appendChild(div);
-        });
-      })
-      .catch(err => {
-        document.getElementById("prenotazioni").innerHTML = '<div class="empty">Errore nel recupero dati.</div>';
-        console.error(err);
-      });
+        // Giorni
+        for (let d = 1; d <= daysInMonth; d++) {
+          const day = document.createElement("div");
+          day.className = "day";
+
+          const dateStr = `${year}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+
+          if (isOccupied(dateStr, prenotazioni)) {
+            day.classList.add("occupied");
+          }
+
+          const dayLabel = document.createElement("span");
+          dayLabel.textContent = d;
+          day.appendChild(dayLabel);
+
+          const prezzoGiorno = prezzi[monthName.toLowerCase()]?.notte || "";
+          if (!isOccupied(dateStr, prenotazioni)) {
+            const price = document.createElement("div");
+            price.className = "price";
+            price.textContent = prezzoGiorno + "€";
+            day.appendChild(price);
+          }
+
+          container.appendChild(day);
+        }
+      }
+    }
+
+    fetchData().then(data => {
+      buildCalendar(data.prenotazioni, data.prezzi);
+    }).catch(err => {
+      document.getElementById("calendar").textContent = "Errore nel caricamento del calendario.";
+      console.error(err);
+    });
   </script>
 </body>
 </html>
