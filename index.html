@@ -35,10 +35,12 @@
       const calendar = document.getElementById("calendar");
       calendar.innerHTML = "";
 
-      const prenotazioni = data.prenotazioni.map(p => ({
-        start: new Date(p.start),
-        end: new Date(p.end)
-      }));
+      const prenotazioni = data.prenotazioni.map(p => {
+  return {
+    start: new Date(p.start + 'T00:00:00'),
+    end: new Date(p.end + 'T00:00:00')
+  };
+});
 
       const months = [
         "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
