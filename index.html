@@ -6,31 +6,21 @@
   <title>Calendario Affitti 2025</title>
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; background: #f5f5f5; }
-    h1 { text-align: center; margin-bottom: 30px; }
-    #calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; margin: auto; max-width: 900px; }
-    .day {
-      background-color: #eaffea;
+    h1, h2 { text-align: center; }
+    .month-block { margin: 30px auto; max-width: 800px; }
+    table { width: 100%; border-collapse: collapse; }
+    th, td {
       border: 1px solid #ccc;
+      width: 14.28%;
       height: 90px;
-      position: relative;
+      vertical-align: top;
       padding: 6px;
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
+      position: relative;
     }
-    .day.occupied {
-      background-color: #ffd6d6;
-    }
-    .price {
-      font-size: 0.75em;
-      color: #007b00;
-      position: absolute;
-      bottom: 4px;
-      right: 6px;
-    }
-    .day-number {
-      font-weight: bold;
-    }
+    td.occupied { background-color: #ffd6d6; }
+    td.free { background-color: #eaffea; }
+    .day-number { font-weight: bold; }
+    .price { font-size: 0.75em; color: #007b00; position: absolute; bottom: 4px; right: 6px; }
   </style>
 </head>
 <body>
@@ -44,33 +34,80 @@
 
       const calendar = document.getElementById("calendar");
       calendar.innerHTML = "";
-      const start = new Date("2025-01-01");
-      const end = new Date("2025-12-31");
-      const giornoMS = 1000 * 60 * 60 * 24;
 
-      for (let d = new Date(start); d <= end; d = new Date(d.getTime() + giornoMS)) {
-        const iso = d.toISOString().split('T')[0];
-        const div = document.createElement("div");
-        div.className = "day";
-        div.innerHTML = `<div class='day-number'>${d.getDate()}</div>`;
+      const prenotazioni = data.prenotazioni.map(p => ({
+        start: new Date(p.start),
+        end: new Date(p.end)
+      }));
 
-        const mese = d.toLocaleDateString("it-IT", { month: "long" }).toLowerCase();
-        const giornoSettimana = d.getDay(); // 0 = domenica, 5 = venerdì, 6 = sabato
+      const months = [
+        "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
+        "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"
+      ];
 
-        const prenotato = data.prenotazioni.some(p => iso >= p.start && iso < p.end);
+      for (let m = 0; m < 12; m++) {
+        const monthDiv = document.createElement("div");
+        monthDiv.className = "month-block";
 
-        if (prenotato) {
-          div.classList.add("occupied");
-          div.innerHTML += "<small>Occupato</small>";
-        } else {
-          let prezzo = parseFloat(data.prezzi[mese]?.notte || 0);
-          if (giornoSettimana === 5 || giornoSettimana === 6) {
-            prezzo += parseFloat(data.prezzi[mese]?.weekend || 0);
-          }
-          div.innerHTML += `<div class='price'>€ ${prezzo.toFixed(0)}</div>`;
+        const header = document.createElement("h2");
+        header.textContent = `${months[m]} 2025`;
+        monthDiv.appendChild(header);
+
+        const table = document.createElement("table");
+        const weekHeader = document.createElement("tr");
+        ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"].forEach(day => {
+          const th = document.createElement("th");
+          th.textContent = day;
+          weekHeader.appendChild(th);
+        });
+        table.appendChild(weekHeader);
+
+        let date = new Date(2025, m, 1);
+        const firstDay = (date.getDay() + 6) % 7;
+        let row = document.createElement("tr");
+
+        for (let i = 0; i < firstDay; i++) {
+          row.appendChild(document.createElement("td"));
         }
 
-        calendar.appendChild(div);
+        while (date.getMonth() === m) {
+          const cell = document.createElement("td");
+          const iso = date.toISOString().split('T')[0];
+          const giorno = date.getDate();
+          const giornoSettimana = date.getDay();
+          const mese = date.toLocaleDateString("it-IT", { month: 'long' }).toLowerCase();
+
+          const occupied = prenotazioni.some(p => date >= p.start && date < p.end);
+          cell.className = occupied ? "occupied" : "free";
+          cell.innerHTML = `<div class='day-number'>${giorno}</div>`;
+
+          if (!occupied) {
+            let prezzo = parseFloat(data.prezzi[mese]?.notte || 0);
+            if (giornoSettimana === 5 || giornoSettimana === 6) {
+              prezzo += parseFloat(data.prezzi[mese]?.weekend || 0);
+            }
+            cell.innerHTML += `<div class='price'>€ ${prezzo.toFixed(0)}</div>`;
+          }
+
+          row.appendChild(cell);
+
+          if ((firstDay + giorno) % 7 === 0) {
+            table.appendChild(row);
+            row = document.createElement("tr");
+          }
+
+          date.setDate(date.getDate() + 1);
+        }
+
+        if (row.children.length > 0) {
+          while (row.children.length < 7) {
+            row.appendChild(document.createElement("td"));
+          }
+          table.appendChild(row);
+        }
+
+        monthDiv.appendChild(table);
+        calendar.appendChild(monthDiv);
       }
     }
 
