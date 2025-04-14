@@ -1,11 +1,74 @@
 <!DOCTYPE html>
-<html>
+<html lang="it">
 <head>
-  <title>Calendario Affitti</title>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calendario Affitti 2025</title>
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 10px;
+    }
+    .fc-daygrid-day.fc-day-today {
+      background: #ffe;
+    }
+    .fc-event-title {
+      font-weight: bold;
+    }
+    .prezzo-notte {
+      font-size: 10px;
+      color: #0a0;
+      position: absolute;
+      top: 2px;
+      right: 2px;
+    }
+    .fc-daygrid-day-number {
+      position: relative;
+    }
+  </style>
 </head>
 <body>
-  <h1 style="text-align:center;">Calendario Affitti</h1>
-  <p style="text-align:center;">Questa sarà la tua interfaccia tipo Airbnb per la gestione degli affitti.</p>
+  <h2>📆 Calendario Affitti Alba Adriatica</h2>
+  <div id='calendar'></div>
+  <script>
+    const calendarEl = document.getElementById('calendar');
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      const response = await fetch('PASTE_YOUR_WEBAPP_URL_HERE');
+      const data = await response.json();
+
+      const prenotazioni = data.prenotazioni;
+      const prezzi = data.prezzi;
+
+      const calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'it',
+        height: 'auto',
+        events: prenotazioni,
+        dayCellDidMount: function(info) {
+          const date = new Date(info.date);
+          const giorno = date.getDate();
+          const mese = date.toLocaleDateString("it-IT", { month: 'long' }).toLowerCase();
+          const giornoSettimana = date.getDay();
+
+          if (!info.el.querySelector('.fc-event')) {
+            let prezzoBase = prezzi[mese]?.notte || 0;
+            if (giornoSettimana === 5 || giornoSettimana === 6) {
+              prezzoBase += prezzi[mese]?.weekend || 0;
+            }
+            const prezzoEl = document.createElement('div');
+            prezzoEl.className = 'prezzo-notte';
+            prezzoEl.innerText = `€ ${prezzoBase}`;
+            info.el.querySelector('.fc-daygrid-day-number').appendChild(prezzoEl);
+            info.el.style.backgroundColor = '#e9ffe9';
+          }
+        }
+      });
+
+      calendar.render();
+    });
+  </script>
 </body>
 </html>
