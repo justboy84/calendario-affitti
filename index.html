@@ -74,13 +74,19 @@
     }
 
     function isOccupied(dateStr, prenotazioni) {
-      const date = new Date(dateStr);
+      const [y, m, d] = dateStr.split("-");
+      const date = new Date(y, m - 1, d);
+
       for (const pren of prenotazioni) {
         const start = new Date(pren.start);
         const end = new Date(pren.end);
-        if (date >= start && date < end) return true;
+        // Confrontiamo come timestamp
+      if (date >= start && date < end) {
+        return true;
       }
-      return false;
+    }
+  return false;
+
     }
 
     function buildCalendar(prenotazioni, prezzi) {
@@ -126,6 +132,7 @@
             price.className = "price";
             price.textContent = prezzoGiorno + "€";
             day.appendChild(price);
+            console.log("Occupato:", dateStr);
           }
 
           container.appendChild(day);
