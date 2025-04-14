@@ -1,77 +1,110 @@
 <!DOCTYPE html>
 <html lang="it">
 <head>
-  <meta name="robots" content="noindex">
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Calendario Affitti 2025</title>
-  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.css" rel="stylesheet">
-  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/main.min.js"></script>
+  <title>Calendario Affitti</title>
   <style>
-    body {
-      font-family: Arial, sans-serif;
-      padding: 10px;
-    }
-    .fc-daygrid-day.fc-day-today {
-      background: #ffe;
-    }
-    .fc-event-title {
-      font-weight: bold;
-    }
-    .prezzo-notte {
-      font-size: 10px;
-      color: #0a0;
-      position: absolute;
-      top: 2px;
-      right: 2px;
-    }
-    .fc-daygrid-day-number {
-      position: relative;
-    }
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f7f7f7; }
+    h1 { text-align: center; margin-bottom: 30px; }
+    table { border-collapse: collapse; width: 100%; max-width: 900px; margin: 0 auto; background: white; }
+    td, th { border: 1px solid #ccc; text-align: center; vertical-align: top; padding: 10px; position: relative; height: 80px; }
+    .occupied { background: #ffb3b3; } /* rosso */
+    .available { background: #d4f8d4; } /* verde */
+    .price { position: absolute; bottom: 5px; right: 5px; font-size: 0.75em; color: #444; }
   </style>
 </head>
 <body>
-  <h2>📆 Calendario Affitti Alba Adriatica</h2>
-  <div id='calendar'></div>
-  <script>
-    const calendarEl = document.getElementById('calendar');
 
-    document.addEventListener('DOMContentLoaded', async () => {
-      const response = await fetch('PASTE_YOUR_WEBAPP_URL_HERE');
-      const data = await response.json();
+<h1>Calendario Prenotazioni Affitti</h1>
 
-      const prenotazioni = data.prenotazioni;
-      const prezzi = data.prezzi;
+<div id="calendar"></div>
 
-      const calendar = new FullCalendar.Calendar(calendarEl, {
-        initialView: 'dayGridMonth',
-        locale: 'it',
-        height: 'auto',
-        events: prenotazioni,
-        dayCellDidMount: function(info) {
-          const date = new Date(info.date);
-          const giorno = date.getDate();
-          const mese = date.toLocaleDateString("it-IT", { month: 'long' }).toLowerCase();
-          const giornoSettimana = date.getDay();
+<script>
+  const sheetId = "1HJ9pL9kPc3As9XazbdUvQpzgBPxYXbWdj2FR-MxJJgc"; // <-- il tuo ID
+  const sheetName = "Prenotazioni ALBA"; // Nome del foglio
+  const prezziSheetName = "Prezzi ALBA";
 
-          if (!info.el.querySelector('.fc-event')) {
-            let prezzoBase = prezzi[mese]?.notte || 0;
-            if (giornoSettimana === 5 || giornoSettimana === 6) {
-              prezzoBase += prezzi[mese]?.weekend || 0;
-            }
-            const prezzoEl = document.createElement('div');
-            prezzoEl.className = 'prezzo-notte';
-            prezzoEl.innerText = `€ ${prezzoBase}`;
-            info.el.querySelector('.fc-daygrid-day-number').appendChild(prezzoEl);
-            info.el.style.backgroundColor = '#e9ffe9';
-          }
+  const currentYear = 2025;
+
+  async function fetchSheet(sheetName) {
+    const url = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:json&sheet=${encodeURIComponent(sheetName)}`;
+    const res = await fetch(url);
+    const text = await res.text();
+    const json = JSON.parse(text.substr(47).slice(0, -2));
+    return json.table.rows.map(r => r.c.map(c => c?.v));
+  }
+
+  function buildCalendar(dates, prices) {
+    const calendar = document.getElementById("calendar");
+    const months = [
+      "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
+      "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"
+    ];
+
+    for (let m = 0; m < 12; m++) {
+      const table = document.createElement("table");
+      const header = document.createElement("tr");
+      header.innerHTML = `<th colspan="7">${months[m]}</th>`;
+      table.appendChild(header);
+
+      const weekDays = ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"];
+      const daysRow = document.createElement("tr");
+      for (let d of weekDays) {
+        daysRow.innerHTML += `<th>${d}</th>`;
+      }
+      table.appendChild(daysRow);
+
+      let date = new Date(currentYear, m, 1);
+      const firstDay = (date.getDay() + 6) % 7; // lunedì = 0
+
+      let row = document.createElement("tr");
+      for (let i = 0; i < firstDay; i++) {
+        row.innerHTML += "<td></td>";
+      }
+
+      while (date.getMonth() === m) {
+        const day = date.getDate();
+        const isoDate = date.toISOString().split("T")[0];
+
+        const isOccupied = dates.some(([_, start, end]) => {
+          const s = new Date(start);
+          const e = new Date(end);
+          return date >= s && date < e;
+        });
+
+        const priceRow = prices.find(r => r[0]?.toLowerCase().includes(months[m].toLowerCase()));
+        const dailyPrice = priceRow ? priceRow[4] : "€";
+
+        row.innerHTML += `
+          <td class="${isOccupied ? "occupied" : "available"}">
+            ${day}
+            <div class="price">${isOccupied ? "" : dailyPrice}</div>
+          </td>
+        `;
+
+        if ((firstDay + day) % 7 === 0) {
+          table.appendChild(row);
+          row = document.createElement("tr");
         }
-      });
 
-      calendar.render();
-    });
-  </script>
+        date.setDate(day + 1);
+      }
+
+      if (row.innerHTML !== "") table.appendChild(row);
+
+      calendar.appendChild(table);
+      calendar.appendChild(document.createElement("br"));
+    }
+  }
+
+  async function main() {
+    const bookings = await fetchSheet(sheetName);       // Prenotazioni
+    const prices = await fetchSheet(prezziSheetName);   // Prezzi mensili
+    buildCalendar(bookings.slice(1), prices.slice(1));
+  }
+
+  main();
+</script>
+
 </body>
 </html>
-
-
