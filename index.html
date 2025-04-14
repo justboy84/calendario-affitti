@@ -90,53 +90,50 @@
     }
 
     function buildCalendar(prenotazioni, prezzi) {
-      const container = document.getElementById("calendar");
-      let year = 2025;
+  const container = document.getElementById("calendar");
+  const year = 2025;
 
-      for (let m = 0; m < 12; m++) {
-        const monthName = months[m];
-        const daysInMonth = new Date(year, m + 1, 0).getDate();
-        const firstDay = new Date(year, m, 1).getDay(); // 0=Sun, 1=Mon...
+  for (let m = 0; m < 12; m++) {
+    const monthName = months[m];
+    const daysInMonth = new Date(year, m + 1, 0).getDate();
+    const firstDay = new Date(year, m, 1).getDay();
 
-        // Titolo del mese
-        const title = document.createElement("div");
-        title.className = "month-title";
-        title.textContent = monthName.toUpperCase();
-        container.appendChild(title);
+    const title = document.createElement("div");
+    title.className = "month-title";
+    title.textContent = monthName.toUpperCase();
+    container.appendChild(title);
 
-        // Spazi vuoti iniziali
-        for (let d = 0; d < (firstDay === 0 ? 6 : firstDay - 1); d++) {
-          const empty = document.createElement("div");
-          empty.className = "day";
-          container.appendChild(empty);
-        }
+    // Spazi vuoti
+    for (let d = 0; d < (firstDay === 0 ? 6 : firstDay - 1); d++) {
+      const empty = document.createElement("div");
+      empty.className = "day";
+      container.appendChild(empty);
+    }
 
-        // Giorni
-        for (let d = 1; d <= daysInMonth; d++) {
-          const day = document.createElement("div");
-          day.className = "day";
+    for (let d = 1; d <= daysInMonth; d++) {
+      const day = document.createElement("div");
+      day.className = "day";
 
-          const dateStr = `${year}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+      const dateStr = `${year}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+      const dayLabel = document.createElement("span");
+      dayLabel.textContent = d;
+      day.appendChild(dayLabel);
 
-          if (isOccupied(dateStr, prenotazioni)) {
-            day.classList.add("occupied");
-          }
+      if (isOccupied(dateStr, prenotazioni)) {
+        day.classList.add("occupied");
+        console.log("Occupato:", dateStr);
+      } else {
+        const prezzoGiorno = prezzi[monthName.toLowerCase()]?.notte || "";
+        const price = document.createElement("div");
+        price.className = "price";
+        price.textContent = prezzoGiorno + "€";
+        day.appendChild(price);
+      }
 
-          const dayLabel = document.createElement("span");
-          dayLabel.textContent = d;
-          day.appendChild(dayLabel);
-
-          const prezzoGiorno = prezzi[monthName.toLowerCase()]?.notte || "";
-          if (!isOccupied(dateStr, prenotazioni)) {
-            const price = document.createElement("div");
-            price.className = "price";
-            price.textContent = prezzoGiorno + "€";
-            day.appendChild(price);
-            console.log("Occupato:", dateStr);
-          }
-
-          container.appendChild(day);
-        }
+      container.appendChild(day);
+    }
+  }
+}
       }
     }
 
