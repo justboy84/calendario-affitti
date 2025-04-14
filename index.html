@@ -28,7 +28,7 @@
       position: relative;
     }
     .occupied {
-      background-color: #f8d7da;
+      background-color: #f8d7da !important;
     }
     .day span {
       font-weight: bold;
@@ -74,66 +74,60 @@
     }
 
     function isOccupied(dateStr, prenotazioni) {
-      const [y, m, d] = dateStr.split("-");
-      const date = new Date(y, m - 1, d);
-
+      const current = new Date(dateStr);
       for (const pren of prenotazioni) {
         const start = new Date(pren.start);
         const end = new Date(pren.end);
-        // Confrontiamo come timestamp
-      if (date >= start && date < end) {
-        return true;
+        if (current >= start && current < end) {
+          return true;
+        }
       }
-    }
-  return false;
-
+      return false;
     }
 
     function buildCalendar(prenotazioni, prezzi) {
-  const container = document.getElementById("calendar");
-  const year = 2025;
+      const container = document.getElementById("calendar");
+      const year = 2025;
 
-  for (let m = 0; m < 12; m++) {
-    const monthName = months[m];
-    const daysInMonth = new Date(year, m + 1, 0).getDate();
-    const firstDay = new Date(year, m, 1).getDay();
+      for (let m = 0; m < 12; m++) {
+        const monthName = months[m];
+        const daysInMonth = new Date(year, m + 1, 0).getDate();
+        const firstDay = new Date(year, m, 1).getDay();
 
-    const title = document.createElement("div");
-    title.className = "month-title";
-    title.textContent = monthName.toUpperCase();
-    container.appendChild(title);
+        const title = document.createElement("div");
+        title.className = "month-title";
+        title.textContent = monthName.toUpperCase();
+        container.appendChild(title);
 
-    // Spazi vuoti
-    for (let d = 0; d < (firstDay === 0 ? 6 : firstDay - 1); d++) {
-      const empty = document.createElement("div");
-      empty.className = "day";
-      container.appendChild(empty);
-    }
+        // Spazi vuoti
+        for (let d = 0; d < (firstDay === 0 ? 6 : firstDay - 1); d++) {
+          const empty = document.createElement("div");
+          empty.className = "day";
+          container.appendChild(empty);
+        }
 
-    for (let d = 1; d <= daysInMonth; d++) {
-      const day = document.createElement("div");
-      day.className = "day";
+        for (let d = 1; d <= daysInMonth; d++) {
+          const day = document.createElement("div");
+          day.className = "day";
 
-      const dateStr = `${year}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-      const dayLabel = document.createElement("span");
-      dayLabel.textContent = d;
-      day.appendChild(dayLabel);
+          const dateStr = `${year}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+          const dayLabel = document.createElement("span");
+          dayLabel.textContent = d;
+          day.appendChild(dayLabel);
 
-      if (isOccupied(dateStr, prenotazioni)) {
-        day.classList.add("occupied");
-        console.log("Occupato:", dateStr);
-      } else {
-        const prezzoGiorno = prezzi[monthName.toLowerCase()]?.notte || "";
-        const price = document.createElement("div");
-        price.className = "price";
-        price.textContent = prezzoGiorno + "€";
-        day.appendChild(price);
-      }
+          if (isOccupied(dateStr, prenotazioni)) {
+            day.classList.add("occupied");
+            console.log("🟥 Occupato:", dateStr);
+          } else {
+            const prezzoGiorno = prezzi[monthName.toLowerCase()]?.notte || "";
+            const price = document.createElement("div");
+            price.className = "price";
+            price.textContent = prezzoGiorno + "€";
+            day.appendChild(price);
+          }
 
-      container.appendChild(day);
-    }
-  }
-}
+          container.appendChild(day);
+        }
       }
     }
 
@@ -141,7 +135,7 @@
       buildCalendar(data.prenotazioni, data.prezzi);
     }).catch(err => {
       document.getElementById("calendar").textContent = "Errore nel caricamento del calendario.";
-      console.error(err);
+      console.error("Errore:", err);
     });
   </script>
 </body>
