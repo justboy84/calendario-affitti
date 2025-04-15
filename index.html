@@ -68,11 +68,11 @@
 <body>
 
   <h1>Calendario Prenotazioni Affitti 2025</h1>
-  $1
-    <button onclick="goToToday()">📆 Torna a oggi</button>
+  <div class="navigation">
     <button onclick="prevMonth()">⬅️ Mese precedente</button>
     <strong id="current-month">Gennaio</strong>
     <button onclick="nextMonth()">➡️ Mese successivo</button>
+    <button onclick="goToToday()">📆 Torna a oggi</button>
   </div>
   <div id="calendar" class="calendar"></div>
 
@@ -161,12 +161,11 @@
       }
     }
 
-    $1
-
-    function goToToday() {
-      currentMonthIndex = new Date().getMonth();
-      renderMonth(currentMonthIndex);
-    }
+    function nextMonth() {
+      if (currentMonthIndex < 11) {
+        currentMonthIndex++;
+        renderMonth(currentMonthIndex);
+      }
     }
 
     function prevMonth() {
@@ -174,6 +173,11 @@
         currentMonthIndex--;
         renderMonth(currentMonthIndex);
       }
+    }
+
+    function goToToday() {
+      currentMonthIndex = new Date().getMonth();
+      renderMonth(currentMonthIndex);
     }
 
     fetchData();
