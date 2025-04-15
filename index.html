@@ -2,83 +2,91 @@
 <html lang="it">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Calendario Affitti</title>
   <style>
     body {
-      font-family: 'Arial', sans-serif;
-      background-color: #f0f0f0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background-color: #fdfdfd;
+      color: #333;
       padding: 20px;
-      text-align: center;
+      margin: 0;
     }
     h1 {
+      text-align: center;
+      font-weight: 500;
       margin-bottom: 10px;
     }
     .navigation {
-      margin-bottom: 15px;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    .navigation button {
+      padding: 8px 16px;
+      margin: 0 8px;
+      border: none;
+      background-color: #e0e0e0;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 14px;
     }
     .calendar {
       display: grid;
       grid-template-columns: repeat(7, 1fr);
-      gap: 5px;
-      max-width: 900px;
+      gap: 8px;
+      max-width: 800px;
       margin: auto;
     }
     .day {
-      background-color: #d4edda;
-      border: 1px solid #ccc;
-      padding: 5px;
-      height: 80px;
+      background-color: #f5f5f5;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 6px;
+      height: 90px;
       position: relative;
-      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
     }
     .occupied {
-      background-color: #f8d7da !important;
+      background-color: #ffe0e0 !important;
     }
     .weekend {
-      background-color: #cfe2ff;
+      background-color: #e6f0ff;
     }
     .holiday {
-      background-color: #ffeeba;
+      background-color: #fff7cc;
     }
-    .day span {
+    .day-number {
       font-weight: bold;
+      font-size: 15px;
     }
     .price {
-      position: absolute;
-      bottom: 5px;
-      right: 5px;
-      font-size: 10px;
-      color: #555;
+      font-size: 12px;
+      color: #666;
+      text-align: right;
     }
     .tooltip {
-      position: absolute;
-      bottom: 5px;
-      left: 5px;
-      background: #333;
+      font-size: 12px;
+      background-color: #444;
       color: white;
       padding: 2px 6px;
       border-radius: 4px;
-      font-size: 10px;
-      white-space: nowrap;
+      position: absolute;
+      top: 5px;
+      left: 5px;
     }
     .month-title {
       grid-column: span 7;
-      font-weight: bold;
-      font-size: 1.2em;
-      margin: 10px 0;
-      background: #fff3cd;
-      padding: 10px;
-    }
-    button {
-      padding: 8px 12px;
-      margin: 0 10px;
-      font-size: 14px;
-      cursor: pointer;
+      text-align: center;
+      font-weight: 600;
+      font-size: 1.3em;
+      margin: 15px 0 5px;
+      color: #444;
     }
   </style>
 </head>
 <body>
-
   <h1>Calendario Prenotazioni Affitti 2025</h1>
   <div class="navigation">
     <button onclick="prevMonth()">⬅️ Mese precedente</button>
@@ -90,12 +98,8 @@
 
   <script>
     const scriptUrl = "https://script.google.com/macros/s/AKfycbyUBbLjZoycZJDnRM4xb3lrrVPAVMt6VrJsnJYy12Xfm2Qb3MEZmOdJjcJHmTmYF2fs0Q/exec";
-
     const months = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
-    const holidays = [
-      "2025-01-01", "2025-01-06", "2025-04-20", "2025-04-25", "2025-05-01",
-      "2025-06-02", "2025-08-15", "2025-11-01", "2025-12-08", "2025-12-25", "2025-12-26"
-    ];
+    const holidays = ["2025-01-01", "2025-01-06", "2025-04-20", "2025-04-25", "2025-05-01", "2025-06-02", "2025-08-15", "2025-11-01", "2025-12-08", "2025-12-25", "2025-12-26"];
 
     let currentMonthIndex = new Date().getMonth();
     let globalData = {};
@@ -169,7 +173,8 @@
           day.appendChild(price);
         }
 
-        const label = document.createElement("span");
+        const label = document.createElement("div");
+        label.className = "day-number";
         label.textContent = d;
         day.appendChild(label);
         container.appendChild(day);
