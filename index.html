@@ -66,11 +66,8 @@
     async function fetchData() {
       const res = await fetch(scriptUrl);
       const data = await res.json();
+      console.log("📥 Dati ricevuti:", data);  // Verifica struttura intera
       return data;
-    }
-
-    function formatDate(date) {
-      return date.toISOString().split("T")[0];
     }
 
     function isOccupied(dateStr, prenotazioni) {
@@ -89,6 +86,9 @@
       const container = document.getElementById("calendar");
       const year = 2025;
 
+      console.log("🗓 Prenotazioni:", prenotazioni);  // ✅ Verifica struttura prenotazioni
+      console.log("💰 Prezzi:", prezzi);              // ✅ Verifica struttura prezzi
+
       for (let m = 0; m < 12; m++) {
         const monthName = months[m];
         const daysInMonth = new Date(year, m + 1, 0).getDate();
@@ -99,7 +99,6 @@
         title.textContent = monthName.toUpperCase();
         container.appendChild(title);
 
-        // Spazi vuoti
         for (let d = 0; d < (firstDay === 0 ? 6 : firstDay - 1); d++) {
           const empty = document.createElement("div");
           empty.className = "day";
@@ -117,7 +116,7 @@
 
           if (isOccupied(dateStr, prenotazioni)) {
             day.classList.add("occupied");
-            console.log("🟥 Occupato:", dateStr);
+            console.log("🟥 Giorno occupato:", dateStr);
           } else {
             const prezzoGiorno = prezzi[monthName.toLowerCase()]?.notte || "";
             const price = document.createElement("div");
@@ -135,7 +134,7 @@
       buildCalendar(data.prenotazioni, data.prezzi);
     }).catch(err => {
       document.getElementById("calendar").textContent = "Errore nel caricamento del calendario.";
-      console.error("Errore:", err);
+      console.error("❌ Errore:", err);
     });
   </script>
 </body>
