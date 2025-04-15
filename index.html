@@ -82,17 +82,25 @@
       font-size: 1.5em;
       margin: 20px 0 10px;
     }
-    @media (max-width: 600px) {
-      .day {
-        height: 60px;
-        font-size: 14px;
-      }
-    }
     #totalOutput {
       margin-top: 30px;
       font-weight: bold;
       font-size: 1.2em;
     }
+    .prenotazioni-section {
+      margin-top: 40px;
+      text-align: left;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .prenotazioni-section h3 {
+      margin-top: 20px;
+      border-bottom: 1px solid #ccc;
+      padding-bottom: 5px;
+    }
+    .past { color: #999; font-style: italic; }
+    .future { color: #d63384; font-weight: bold; }
   </style>
 </head>
 <body>
@@ -106,6 +114,8 @@
 
   <div class="calendar" id="calendar"></div>
   <div id="totalOutput">Totale: 0€</div>
+
+  <div class="prenotazioni-section" id="listaPrenotazioni"></div>
 
   <script>
     const scriptUrl = "https://script.google.com/macros/s/AKfycbxfJ3pJHkSm0SHenFspLTkVrUOO_Ts0XJ4ZLcSE4EYg8qXKG8oQpa94Gi0sR28-WV74GQ/exec";
@@ -136,20 +146,20 @@
     }
 
     function isOccupied(dateStr, prenotazioni) {
-  const d = new Date(dateStr);
-  d.setHours(0, 0, 0, 0);
-  for (const p of prenotazioni) {
-    const start = new Date(p.start);
-    const end = new Date(p.end);
-    start.setHours(0, 0, 0, 0);
-    end.setHours(0, 0, 0, 0);
-    if (d >= start && d < end) return p;
-  }
-  return null;
-}
-  return null;
-}
+      const d = new Date(dateStr);
+      d.setHours(0, 0, 0, 0);
+      for (const p of prenotazioni) {
+        const start = new Date(p.start);
+        const end = new Date(p.end);
+        start.setHours(0, 0, 0, 0);
+        end.setHours(0, 0, 0, 0);
+        if (d >= start && d < end) return p;
+      }
       return null;
+    }
+
+    function formatDate(d) {
+      return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth()+1).padStart(2, '0')}/${d.getFullYear()}`;
     }
 
     function buildCalendar(prenotazioni, prezzi) {
@@ -209,6 +219,34 @@
       }
 
       document.getElementById("totalOutput").textContent = `Totale: ${total}€`;
+
+      // Lista prenotazioni sotto il calendario
+      const lista = document.getElementById("listaPrenotazioni");
+      const oggi = new Date();
+      lista.innerHTML = '<h3>Prenotazioni future</h3>';
+      const future = prenotazioni.filter(p => new Date(p.end) >= oggi);
+      const past = prenotazioni.filter(p => new Date(p.end) < oggi);
+
+      future.forEach(p => {
+        const div = document.createElement("div");
+        const start = new Date(p.start);
+        const end = new Date(p.end);
+        const giorni = Math.round((end - start) / (1000*60*60*24));
+        div.className = "future";
+        div.textContent = `• ${p.nome} – dal ${formatDate(start)} al ${formatDate(end)} (${giorni} notti)`;
+        lista.appendChild(div);
+      });
+
+      lista.innerHTML += '<h3>Prenotazioni passate</h3>';
+      past.forEach(p => {
+        const div = document.createElement("div");
+        const start = new Date(p.start);
+        const end = new Date(p.end);
+        const giorni = Math.round((end - start) / (1000*60*60*24));
+        div.className = "past";
+        div.textContent = `• ${p.nome} – dal ${formatDate(start)} al ${formatDate(end)} (${giorni} notti)`;
+        lista.appendChild(div);
+      });
     }
 
     function prevMonth() {
