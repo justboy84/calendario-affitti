@@ -6,241 +6,232 @@
   <title>Calendario Affitti 2025</title>
   <style>
     body {
-      font-family: 'Segoe UI', sans-serif;
-      background-color: #f9f9f9;
-      padding: 20px;
+      font-family: 'Arial', sans-serif;
+      background-color: #f8f9fa;
       margin: 0;
-      text-align: center;
-      color: #333;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
     }
 
     h1 {
-      font-size: 1.5em;
-      margin-bottom: 10px;
+      margin: 20px;
+      font-size: 1.5rem;
     }
 
     .controls {
       display: flex;
-      justify-content: center;
-      flex-wrap: wrap;
       gap: 10px;
+      flex-wrap: wrap;
+      justify-content: center;
       margin-bottom: 20px;
     }
 
-    button {
-      background-color: #fff;
-      border: 1px solid #ccc;
+    .controls button {
       padding: 10px 16px;
-      border-radius: 8px;
+      font-size: 14px;
+      border: none;
+      background-color: #e9ecef;
       cursor: pointer;
-      font-size: 0.9em;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      border-radius: 6px;
     }
 
-    button:hover {
-      background-color: #f0f0f0;
-    }
-
-    #calendar {
-      display: grid;
-      grid-template-columns: repeat(7, 1fr);
-      gap: 5px;
-      max-width: 100%;
-      margin: auto;
+    .calendar {
+      width: 100%;
+      max-width: 600px;
     }
 
     .month-title {
-      grid-column: span 7;
-      font-weight: 600;
-      background-color: #fff8dc;
+      text-align: center;
+      background-color: #fff3cd;
+      font-weight: bold;
       padding: 10px;
-      border-radius: 8px;
       margin-top: 10px;
+      font-size: 1.2rem;
+    }
+
+    .weekdays {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      background: #dee2e6;
+      font-weight: bold;
+      text-align: center;
+      padding: 10px 0;
+    }
+
+    .days {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
     }
 
     .day {
-      background-color: #f5f5f5;
-      border: 1px solid #e0e0e0;
-      padding: 6px;
-      min-height: 60px;
-      border-radius: 8px;
-      font-size: 0.8em;
-      position: relative;
+      height: 60px;
+      border: 1px solid #ccc;
       display: flex;
       flex-direction: column;
-      align-items: flex-start;
+      align-items: center;
       justify-content: space-between;
+      font-size: 12px;
+      padding: 5px;
+      box-sizing: border-box;
+      background-color: #f1f3f5;
+      position: relative;
     }
 
-    .day.today {
-      background-color: #fffacd;
-      border: 2px solid #ffa;
+    .day.occupied {
+      background-color: #f8d7da !important;
     }
 
-    .occupied {
-      background-color: #ffe0e0;
-    }
-
-    .weekend {
-      background-color: #e6f0ff;
-    }
-
-    .holiday {
-      background-color: #fff3cd;
-    }
-
-    .day span {
-      font-weight: bold;
+    .day.weekend {
+      background-color: #e7f1ff;
     }
 
     .price {
-      font-size: 0.7em;
-      color: #777;
-      align-self: flex-end;
+      font-size: 10px;
+      color: #555;
     }
 
-    .day:hover::after {
-      content: attr(data-tooltip);
+    .tooltip {
       position: absolute;
-      bottom: 100%;
-      left: 50%;
-      transform: translateX(-50%);
-      background-color: #333;
-      color: #fff;
-      padding: 5px 8px;
+      top: 2px;
+      left: 2px;
+      font-size: 10px;
+      font-weight: bold;
+      background: rgba(255,255,255,0.8);
+      padding: 2px 4px;
       border-radius: 4px;
-      font-size: 0.75em;
-      white-space: nowrap;
-      z-index: 10;
-    }
-
-    @media (max-width: 600px) {
-      .day {
-        min-height: 50px;
-        font-size: 0.7em;
-        padding: 4px;
-      }
-
-      button {
-        font-size: 0.8em;
-        padding: 8px 12px;
-      }
     }
   </style>
 </head>
 <body>
-  <h1>Affitti 2025</h1>
+  <h1>Calendario Affitti 2025</h1>
   <div class="controls">
-    <button id="prevMonth">⬅️ Mese precedente</button>
-    <div id="currentMonth" style="font-weight: bold;"></div>
-    <button id="nextMonth">➡️ Mese successivo</button>
-    <button id="gotoToday">📅 Torna a oggi</button>
+    <button onclick="prevMonth()">⬅️ Mese precedente</button>
+    <button onclick="nextMonth()">➡️ Mese successivo</button>
+    <button onclick="goToToday()">📅 Torna a oggi</button>
   </div>
-  <div id="calendar"></div>
+  <div id="calendar" class="calendar"></div>
 
   <script>
-    const scriptUrl = "https://script.google.com/macros/s/AKfycbxfJ3pJHkSm0SHenFspLTkVrUOO_Ts0XJ4ZLcSE4EYg8qXKG8oQpa94Gi0sR28-WV74GQ/exec";
-    let currentDate = new Date();
+    const scriptUrl = "https://script.google.com/macros/s/AKfycbyUBbLjZoycZJDnRM4xb3lrrVPAVMt6VrJsnJYy12Xfm2Qb3MEZmOdJjcJHmTmYF2fs0Q/exec";
 
-    async function fetchData() {
-      const res = await fetch(scriptUrl);
-      return await res.json();
+    const monthNames = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
+    const dayNames = ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"];
+    let currentYear = new Date().getFullYear();
+    let currentMonth = new Date().getMonth();
+
+    function fetchData() {
+      return fetch(scriptUrl)
+        .then(res => res.json());
     }
 
-    function isSameDay(d1, d2) {
-      return d1.getFullYear() === d2.getFullYear() &&
-             d1.getMonth() === d2.getMonth() &&
-             d1.getDate() === d2.getDate();
-    }
-
-    function renderCalendar(data, year, month) {
-      const calendar = document.getElementById("calendar");
-      calendar.innerHTML = "";
-
-      const date = new Date(year, month);
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-      const startDay = new Date(year, month, 1).getDay();
-      const prenotazioni = data.prenotazioni;
-      const prezzi = data.prezzi;
-      const monthName = date.toLocaleString('it-IT', { month: 'long' });
-      document.getElementById("currentMonth").textContent = monthName.charAt(0).toUpperCase() + monthName.slice(1);
-
-      const title = document.createElement("div");
-      title.className = "month-title";
-      title.textContent = monthName.toUpperCase();
-      calendar.appendChild(title);
-
-      for (let i = 0; i < (startDay === 0 ? 6 : startDay - 1); i++) {
-        const empty = document.createElement("div");
-        empty.className = "day";
-        calendar.appendChild(empty);
+    function isOccupied(dateStr, prenotazioni) {
+      const current = new Date(dateStr);
+      for (const pren of prenotazioni) {
+        const start = new Date(pren.start);
+        const end = new Date(pren.end);
+        if (current >= start && current < end) return pren.nome;
       }
+      return null;
+    }
 
-      for (let d = 1; d <= daysInMonth; d++) {
-        const thisDate = new Date(year, month, d);
+    function buildCalendar(prenotazioni, prezzi) {
+      const container = document.getElementById("calendar");
+      container.innerHTML = "";
+      const monthTitle = document.createElement("div");
+      monthTitle.className = "month-title";
+      monthTitle.textContent = `${monthNames[currentMonth].toUpperCase()} ${currentYear}`;
+      container.appendChild(monthTitle);
+
+      const weekdayRow = document.createElement("div");
+      weekdayRow.className = "weekdays";
+      dayNames.forEach(d => {
         const dayEl = document.createElement("div");
-        dayEl.className = "day";
-        const dateStr = thisDate.toISOString().split("T")[0];
+        dayEl.textContent = d;
+        weekdayRow.appendChild(dayEl);
+      });
+      container.appendChild(weekdayRow);
 
-        // Check oggi
-        if (isSameDay(thisDate, new Date())) dayEl.classList.add("today");
+      const daysGrid = document.createElement("div");
+      daysGrid.className = "days";
 
-        // Check prenotazioni
-        for (const pren of prenotazioni) {
-          const start = new Date(pren.start);
-          const end = new Date(pren.end);
-          if (thisDate >= start && thisDate < end) {
-            dayEl.classList.add("occupied");
-            dayEl.setAttribute("data-tooltip", pren.nome);
-            break;
-          }
-        }
+      const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+      const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
 
-        // Weekend
-        if (thisDate.getDay() === 0 || thisDate.getDay() === 6)
-          dayEl.classList.add("weekend");
-
-        const span = document.createElement("span");
-        span.textContent = d;
-        dayEl.appendChild(span);
-
-        const meseChiave = monthName.toLowerCase();
-        const prezzo = prezzi[meseChiave]?.notte;
-        if (prezzo) {
-          const price = document.createElement("div");
-          price.className = "price";
-          price.textContent = prezzo + "€";
-          dayEl.appendChild(price);
-        }
-
-        calendar.appendChild(dayEl);
+      for (let i = 1; i < (firstDay === 0 ? 7 : firstDay); i++) {
+        daysGrid.appendChild(document.createElement("div"));
       }
+
+      for (let day = 1; day <= daysInMonth; day++) {
+        const dateStr = `${currentYear}-${String(currentMonth + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+        const cell = document.createElement("div");
+        cell.className = "day";
+
+        const giornoSettimana = new Date(dateStr).getDay();
+        if (giornoSettimana === 0 || giornoSettimana === 6) cell.classList.add("weekend");
+
+        const occupatoDa = isOccupied(dateStr, prenotazioni);
+        if (occupatoDa) {
+          cell.classList.add("occupied");
+          const tooltip = document.createElement("div");
+          tooltip.className = "tooltip";
+          tooltip.textContent = occupatoDa;
+          cell.appendChild(tooltip);
+        }
+
+        const dayLabel = document.createElement("div");
+        dayLabel.textContent = day;
+        cell.appendChild(dayLabel);
+
+        if (!occupatoDa) {
+          const price = document.createElement("div");
+          const mese = monthNames[currentMonth].toLowerCase();
+          price.className = "price";
+          price.textContent = prezzi[mese]?.notte + "€";
+          cell.appendChild(price);
+        }
+
+        daysGrid.appendChild(cell);
+      }
+
+      container.appendChild(daysGrid);
     }
 
-    function loadCalendar(date) {
+    function prevMonth() {
+      if (currentMonth === 0) {
+        currentMonth = 11;
+        currentYear--;
+      } else {
+        currentMonth--;
+      }
+      updateCalendar();
+    }
+
+    function nextMonth() {
+      if (currentMonth === 11) {
+        currentMonth = 0;
+        currentYear++;
+      } else {
+        currentMonth++;
+      }
+      updateCalendar();
+    }
+
+    function goToToday() {
+      const today = new Date();
+      currentMonth = today.getMonth();
+      currentYear = today.getFullYear();
+      updateCalendar();
+    }
+
+    function updateCalendar() {
       fetchData().then(data => {
-        renderCalendar(data, date.getFullYear(), date.getMonth());
+        buildCalendar(data.prenotazioni, data.prezzi);
       });
     }
 
-    document.getElementById("prevMonth").onclick = () => {
-      currentDate.setMonth(currentDate.getMonth() - 1);
-      loadCalendar(currentDate);
-    };
-
-    document.getElementById("nextMonth").onclick = () => {
-      currentDate.setMonth(currentDate.getMonth() + 1);
-      loadCalendar(currentDate);
-    };
-
-    document.getElementById("gotoToday").onclick = () => {
-      currentDate = new Date();
-      loadCalendar(currentDate);
-    };
-
-    window.onload = () => {
-      loadCalendar(currentDate);
-    };
+    goToToday();
   </script>
 </body>
 </html>
