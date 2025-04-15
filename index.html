@@ -11,7 +11,10 @@
       text-align: center;
     }
     h1 {
-      margin-bottom: 20px;
+      margin-bottom: 10px;
+    }
+    .navigation {
+      margin-bottom: 15px;
     }
     .calendar {
       display: grid;
@@ -54,11 +57,23 @@
       background: #fff3cd;
       padding: 10px;
     }
+    button {
+      padding: 8px 12px;
+      margin: 0 10px;
+      font-size: 14px;
+      cursor: pointer;
+    }
   </style>
 </head>
 <body>
 
   <h1>Calendario Prenotazioni Affitti 2025</h1>
+  $1
+    <button onclick="goToToday()">📆 Torna a oggi</button>
+    <button onclick="prevMonth()">⬅️ Mese precedente</button>
+    <strong id="current-month">Gennaio</strong>
+    <button onclick="nextMonth()">➡️ Mese successivo</button>
+  </div>
   <div id="calendar" class="calendar"></div>
 
   <script>
@@ -70,9 +85,13 @@
       "2025-06-02", "2025-08-15", "2025-11-01", "2025-12-08", "2025-12-25", "2025-12-26"
     ];
 
+    let currentMonthIndex = new Date().getMonth();
+    let globalData = {};
+
     async function fetchData() {
       const res = await fetch(scriptUrl);
-      return await res.json();
+      globalData = await res.json();
+      renderMonth(currentMonthIndex);
     }
 
     function isOccupied(dateStr, prenotazioni) {
@@ -87,68 +106,77 @@
       return false;
     }
 
-    function buildCalendar(prenotazioni, prezzi) {
+    function renderMonth(m) {
       const container = document.getElementById("calendar");
+      const label = document.getElementById("current-month");
       container.innerHTML = "";
+      label.textContent = months[m];
+
       const year = 2025;
+      const monthName = months[m];
+      const daysInMonth = new Date(year, m + 1, 0).getDate();
+      const firstDay = new Date(year, m, 1).getDay();
 
-      for (let m = 0; m < 12; m++) {
-        const monthName = months[m];
-        const daysInMonth = new Date(year, m + 1, 0).getDate();
-        const firstDay = new Date(year, m, 1).getDay();
+      const title = document.createElement("div");
+      title.className = "month-title";
+      title.textContent = monthName.toUpperCase();
+      container.appendChild(title);
 
-        const title = document.createElement("div");
-        title.className = "month-title";
-        title.textContent = monthName.toUpperCase();
-        container.appendChild(title);
+      for (let d = 0; d < (firstDay === 0 ? 6 : firstDay - 1); d++) {
+        const empty = document.createElement("div");
+        empty.className = "day";
+        container.appendChild(empty);
+      }
 
-        for (let d = 0; d < (firstDay === 0 ? 6 : firstDay - 1); d++) {
-          const empty = document.createElement("div");
-          empty.className = "day";
-          container.appendChild(empty);
+      for (let d = 1; d <= daysInMonth; d++) {
+        const day = document.createElement("div");
+        day.className = "day";
+
+        const dateStr = `${year}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+        const currentDate = new Date(dateStr);
+        const dayOfWeek = currentDate.getDay();
+
+        if (holidays.includes(dateStr)) {
+          day.classList.add("holiday");
+        } else if (dayOfWeek === 0 || dayOfWeek === 6) {
+          day.classList.add("weekend");
         }
 
-        for (let d = 1; d <= daysInMonth; d++) {
-          const day = document.createElement("div");
-          day.className = "day";
-
-          const dateStr = `${year}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-          const currentDate = new Date(dateStr);
-          const dayOfWeek = currentDate.getDay();
-
-          if (holidays.includes(dateStr)) {
-            day.classList.add("holiday");
-          } else if (dayOfWeek === 0 || dayOfWeek === 6) {
-            day.classList.add("weekend");
-          }
-
-          const occupato = isOccupied(dateStr, prenotazioni);
-          if (occupato) {
-            day.classList.add("occupied");
-            day.title = "Occupato: " + occupato;
-          } else {
-            const prezzoGiorno = prezzi[monthName.toLowerCase()]?.notte || "";
-            const price = document.createElement("div");
-            price.className = "price";
-            price.textContent = prezzoGiorno + "€";
-            day.appendChild(price);
-          }
-
-          const label = document.createElement("span");
-          label.textContent = d;
-          day.appendChild(label);
-          container.appendChild(day);
+        const occupato = isOccupied(dateStr, globalData.prenotazioni);
+        if (occupato) {
+          day.classList.add("occupied");
+          day.title = "Occupato: " + occupato;
+        } else {
+          const prezzoGiorno = globalData.prezzi[monthName.toLowerCase()]?.notte || "";
+          const price = document.createElement("div");
+          price.className = "price";
+          price.textContent = prezzoGiorno + "€";
+          day.appendChild(price);
         }
+
+        const label = document.createElement("span");
+        label.textContent = d;
+        day.appendChild(label);
+        container.appendChild(day);
       }
     }
 
-    fetchData().then(data => {
-      console.log("📅 Prenotazioni:", data.prenotazioni);
-      buildCalendar(data.prenotazioni, data.prezzi);
-    }).catch(err => {
-      document.getElementById("calendar").textContent = "Errore nel caricamento del calendario.";
-      console.error("Errore:", err);
-    });
+    $1
+
+    function goToToday() {
+      currentMonthIndex = new Date().getMonth();
+      renderMonth(currentMonthIndex);
+    }
+    }
+
+    function prevMonth() {
+      if (currentMonthIndex > 0) {
+        currentMonthIndex--;
+        renderMonth(currentMonthIndex);
+      }
+    }
+
+    fetchData();
   </script>
 </body>
 </html>
