@@ -56,7 +56,7 @@
   <div id="calendar" class="calendar"></div>
 
   <script>
-    const scriptUrl = "https://script.google.com/macros/s/AKfycbxfJ3pJHkSm0SHenFspLTkVrUOO_Ts0XJ4ZLcSE4EYg8qXKG8oQpa94Gi0sR28-WV74GQ/exec";
+    const scriptUrl = "https://script.google.com/macros/s/AKfycbyUBbLjZoycZJDnRM4xb3lrrVPAVMt6VrJsnJYy12Xfm2Qb3MEZmOdJjcJHmTmYF2fs0Q/exec";
 
     const months = [
       "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
@@ -66,28 +66,23 @@
     async function fetchData() {
       const res = await fetch(scriptUrl);
       const data = await res.json();
-      console.log("📥 Dati ricevuti:", data);  // Verifica struttura intera
+      console.log("✅ Prenotazioni:", data.prenotazioni);
+      console.log("✅ Prezzi:", data.prezzi);
       return data;
     }
 
     function isOccupied(dateStr, prenotazioni) {
       const current = new Date(dateStr);
-      for (const pren of prenotazioni) {
+      return prenotazioni.some(pren => {
         const start = new Date(pren.start);
         const end = new Date(pren.end);
-        if (current >= start && current < end) {
-          return true;
-        }
-      }
-      return false;
+        return current >= start && current < end;
+      });
     }
 
     function buildCalendar(prenotazioni, prezzi) {
       const container = document.getElementById("calendar");
       const year = 2025;
-
-      console.log("🗓 Prenotazioni:", prenotazioni);  // ✅ Verifica struttura prenotazioni
-      console.log("💰 Prezzi:", prezzi);              // ✅ Verifica struttura prezzi
 
       for (let m = 0; m < 12; m++) {
         const monthName = months[m];
@@ -99,6 +94,7 @@
         title.textContent = monthName.toUpperCase();
         container.appendChild(title);
 
+        // Spazi vuoti
         for (let d = 0; d < (firstDay === 0 ? 6 : firstDay - 1); d++) {
           const empty = document.createElement("div");
           empty.className = "day";
@@ -116,7 +112,7 @@
 
           if (isOccupied(dateStr, prenotazioni)) {
             day.classList.add("occupied");
-            console.log("🟥 Giorno occupato:", dateStr);
+            console.log("🟥 Occupato:", dateStr);
           } else {
             const prezzoGiorno = prezzi[monthName.toLowerCase()]?.notte || "";
             const price = document.createElement("div");
@@ -130,12 +126,12 @@
       }
     }
 
-    fetchData().then(data => {
-      buildCalendar(data.prenotazioni, data.prezzi);
-    }).catch(err => {
-      document.getElementById("calendar").textContent = "Errore nel caricamento del calendario.";
-      console.error("❌ Errore:", err);
-    });
+    fetchData()
+      .then(data => buildCalendar(data.prenotazioni, data.prezzi))
+      .catch(err => {
+        document.getElementById("calendar").textContent = "Errore nel caricamento del calendario.";
+        console.error("Errore:", err);
+      });
   </script>
 </body>
 </html>
