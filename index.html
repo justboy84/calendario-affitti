@@ -29,6 +29,7 @@
       padding: 5px;
       height: 80px;
       position: relative;
+      overflow: hidden;
     }
     .occupied {
       background-color: #f8d7da !important;
@@ -48,6 +49,17 @@
       right: 5px;
       font-size: 10px;
       color: #555;
+    }
+    .tooltip {
+      position: absolute;
+      bottom: 5px;
+      left: 5px;
+      background: #333;
+      color: white;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 10px;
+      white-space: nowrap;
     }
     .month-title {
       grid-column: span 7;
@@ -145,7 +157,10 @@
         const occupato = isOccupied(dateStr, globalData.prenotazioni);
         if (occupato) {
           day.classList.add("occupied");
-          day.title = "Occupato: " + occupato;
+          const tooltip = document.createElement("div");
+          tooltip.className = "tooltip";
+          tooltip.textContent = occupato;
+          day.appendChild(tooltip);
         } else {
           const prezzoGiorno = globalData.prezzi[monthName.toLowerCase()]?.notte || "";
           const price = document.createElement("div");
