@@ -136,12 +136,17 @@
     }
 
     function isOccupied(dateStr, prenotazioni) {
-      const d = new Date(dateStr);
-      for (const p of prenotazioni) {
-        const start = new Date(p.start);
-        const end = new Date(p.end);
-        if (d >= start && d < end) return p;
-      }
+  const d = new Date(dateStr);
+  d.setHours(0, 0, 0, 0);
+  for (const p of prenotazioni) {
+    const start = new Date(p.start);
+    const end = new Date(p.end);
+    start.setHours(0, 0, 0, 0);
+    end.setHours(0, 0, 0, 0);
+    if (d >= start && d < end) return p;
+  }
+  return null;
+}
       return null;
     }
 
