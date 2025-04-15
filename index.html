@@ -136,7 +136,13 @@
     }
 
     function isOccupied(dateStr, prenotazioni) {
-      return prenotazioni.find(p => dateStr >= p.start && dateStr < p.end);
+      const d = new Date(dateStr);
+      for (const p of prenotazioni) {
+        const start = new Date(p.start);
+        const end = new Date(p.end);
+        if (d >= start && d < end) return p;
+      }
+      return null;
     }
 
     function buildCalendar(prenotazioni, prezzi) {
