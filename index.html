@@ -30,6 +30,12 @@
     .occupied {
       background-color: #f8d7da !important;
     }
+    .weekend {
+      background-color: #cfe2ff;
+    }
+    .holiday {
+      background-color: #ffeeba;
+    }
     .day span {
       font-weight: bold;
     }
@@ -58,30 +64,32 @@
   <script>
     const scriptUrl = "https://script.google.com/macros/s/AKfycbyUBbLjZoycZJDnRM4xb3lrrVPAVMt6VrJsnJYy12Xfm2Qb3MEZmOdJjcJHmTmYF2fs0Q/exec";
 
-    const months = [
-      "Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno",
-      "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"
+    const months = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
+    const holidays = [
+      "2025-01-01", "2025-01-06", "2025-04-20", "2025-04-25", "2025-05-01",
+      "2025-06-02", "2025-08-15", "2025-11-01", "2025-12-08", "2025-12-25", "2025-12-26"
     ];
 
     async function fetchData() {
       const res = await fetch(scriptUrl);
-      const data = await res.json();
-      console.log("✅ Prenotazioni:", data.prenotazioni);
-      console.log("✅ Prezzi:", data.prezzi);
-      return data;
+      return await res.json();
     }
 
     function isOccupied(dateStr, prenotazioni) {
       const current = new Date(dateStr);
-      return prenotazioni.some(pren => {
+      for (const pren of prenotazioni) {
         const start = new Date(pren.start);
         const end = new Date(pren.end);
-        return current >= start && current < end;
-      });
+        if (current >= start && current < end) {
+          return pren.nome || true;
+        }
+      }
+      return false;
     }
 
     function buildCalendar(prenotazioni, prezzi) {
       const container = document.getElementById("calendar");
+      container.innerHTML = "";
       const year = 2025;
 
       for (let m = 0; m < 12; m++) {
@@ -94,7 +102,6 @@
         title.textContent = monthName.toUpperCase();
         container.appendChild(title);
 
-        // Spazi vuoti
         for (let d = 0; d < (firstDay === 0 ? 6 : firstDay - 1); d++) {
           const empty = document.createElement("div");
           empty.className = "day";
@@ -106,13 +113,19 @@
           day.className = "day";
 
           const dateStr = `${year}-${String(m + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-          const dayLabel = document.createElement("span");
-          dayLabel.textContent = d;
-          day.appendChild(dayLabel);
+          const currentDate = new Date(dateStr);
+          const dayOfWeek = currentDate.getDay();
 
-          if (isOccupied(dateStr, prenotazioni)) {
+          if (holidays.includes(dateStr)) {
+            day.classList.add("holiday");
+          } else if (dayOfWeek === 0 || dayOfWeek === 6) {
+            day.classList.add("weekend");
+          }
+
+          const occupato = isOccupied(dateStr, prenotazioni);
+          if (occupato) {
             day.classList.add("occupied");
-            console.log("🟥 Occupato:", dateStr);
+            day.title = "Occupato: " + occupato;
           } else {
             const prezzoGiorno = prezzi[monthName.toLowerCase()]?.notte || "";
             const price = document.createElement("div");
@@ -121,17 +134,21 @@
             day.appendChild(price);
           }
 
+          const label = document.createElement("span");
+          label.textContent = d;
+          day.appendChild(label);
           container.appendChild(day);
         }
       }
     }
 
-    fetchData()
-      .then(data => buildCalendar(data.prenotazioni, data.prezzi))
-      .catch(err => {
-        document.getElementById("calendar").textContent = "Errore nel caricamento del calendario.";
-        console.error("Errore:", err);
-      });
+    fetchData().then(data => {
+      console.log("📅 Prenotazioni:", data.prenotazioni);
+      buildCalendar(data.prenotazioni, data.prezzi);
+    }).catch(err => {
+      document.getElementById("calendar").textContent = "Errore nel caricamento del calendario.";
+      console.error("Errore:", err);
+    });
   </script>
 </body>
 </html>
